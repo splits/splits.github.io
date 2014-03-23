@@ -1,7 +1,11 @@
-html, body, #wrapper, td {
+html, body, #wrapper, td, iframe {
   height: 100%;
 }
 
 #wrapper {
+  width: 100%;
+}
+
+iframe {
   width: 100%;
 }

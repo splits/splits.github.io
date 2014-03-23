@@ -1,212 +1,245 @@
-//colResizable - credits to Alvaro Prieto Lauroba - MIT & GPL
-(function (a) {
-    jQuery.browser = {};
-    (function () {
-        jQuery.browser.msie = false;
-        jQuery.browser.version = 0;
-        if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
-            jQuery.browser.msie = true;
-            jQuery.browser.version = RegExp.$1;
-        }
-    })();
-    function h(b) {
-        var c = a(this).data(q),
-            d = m[c.t],
-            e = d.g[c.i];
-        e.ox = b.pageX;
-        e.l = e[I]()[H];
-        i[D](E + q, f)[D](F + q, g);
-        P[z](x + "*{cursor:" + d.opt.dragCursor + K + J);
-        e[B](d.opt.draggingClass);
-        l = e;
-        if (d.c[c.i].l)
-            for (b = 0; b < d.ln; b++) c = d.c[b], c.l = j, c.w = c[u]();
-        return j
-    }
+//
+// Resizable Table Columns.
+//  version: 1.0
+//
+// (c) 2006, bz
+//
+// 25.12.2006:  first working prototype
+// 26.12.2006:  now works in IE as well but not in Opera (Opera is @#$%!)
+// 27.12.2006:  changed initialization, now just make class='resizable' in table and load script
+//
+function preventEvent(e) {
+	var ev = e || window.event;
+	if (ev.preventDefault) ev.preventDefault();
+	else ev.returnValue = false;
+	if (ev.stopPropagation)
+		ev.stopPropagation();
+	return false;
+}
 
-    function g(b) {
-        i.unbind(E + q).unbind(F + q);
-        a("head :last-child").remove();
-        if (l) {
-            l[A](l.t.opt.draggingClass);
-            var f = l.t,
-                g = f.opt.onResize;
-            l.x && (e(f, l.i, 1), d(f), g && (b[G] = f[0], g(b)));
-            f.p && O && c(f);
-            l = k
-        }
-    }
+function getStyle(x, styleProp) {
+	if (x.currentStyle)
+		var y = x.currentStyle[styleProp];
+	else if (window.getComputedStyle)
+		var y = document.defaultView.getComputedStyle(x,null).getPropertyValue(styleProp);
+	return y;
+}
 
-    function f(a) {
-        if (l) {
-            var b = l.t,
-                c = a.pageX - l.ox + l.l,
-                f = b.opt.minWidth,
-                g = l.i,
-                h = 1.5 * b.cs + f + b.b,
-                i = g == b.ln - 1 ? b.w - h : b.g[g + 1][I]()[H] - b.cs - f,
-                f = g ? b.g[g - 1][I]()[H] + b.cs + f : h,
-                c = s.max(f, s.min(i, c));
-            l.x = c;
-            l.css(H, c + p);
-            if (b.opt.liveDrag && (e(b, g), d(b), c = b.opt.onDrag)) a[G] = b[0], c(a)
-        }
-        return j
-    }
+function getWidth(x) {
+	if (x.currentStyle)
+		// in IE
+		var y = x.clientWidth - parseInt(x.currentStyle["paddingLeft"]) - parseInt(x.currentStyle["paddingRight"]);
+		// for IE5: var y = x.offsetWidth;
+	else if (window.getComputedStyle)
+		// in Gecko
+		var y = document.defaultView.getComputedStyle(x,null).getPropertyValue("width");
+	return y || 0;
+}
 
-    function e(a, b, c) {
-        var d = l.x - l.l,
-            e = a.c[b],
-            f = a.c[b + 1],
-            g = e.w + d,
-            d = f.w - d;
-        e[u](g + p);
-        f[u](d + p);
-        a.cg.eq(b)[u](g + p);
-        a.cg.eq(b + 1)[u](d + p);
-        if (c) e.w = g, f.w = d
-    }
+function setCookie (name, value, expires, path, domain, secure) {
+	document.cookie = name + "=" + escape(value) +
+		((expires) ? "; expires=" + expires : "") +
+		((path) ? "; path=" + path : "") +
+		((domain) ? "; domain=" + domain : "") +
+		((secure) ? "; secure" : "");
+}
 
-    function d(a) {
-        a.gc[u](a.w);
-        for (var b = 0; b < a.ln; b++) {
-            var c = a.c[b];
-            a.g[b].css({
-                left: c.offset().left - a.offset()[H] + c.outerWidth() + a.cs / 2 + p,
-                height: a.opt.headerOnly ? a.c[0].outerHeight() : a.outerHeight()
-            })
-        }
-    }
+function getCookie(name) {
+	var cookie = " " + document.cookie;
+	var search = " " + name + "=";
+	var setStr = null;
+	var offset = 0;
+	var end = 0;
+	if (cookie.length > 0) {
+		offset = cookie.indexOf(search);
+		if (offset != -1) {
+			offset += search.length;
+			end = cookie.indexOf(";", offset)
+			if (end == -1) {
+				end = cookie.length;
+			}
+			setStr = unescape(cookie.substring(offset, end));
+		}
+	}
+	return(setStr);
+}
+// main class prototype
+function ColumnResize(table) {
+	if (table.tagName != 'TABLE') return;
 
-    function c(a, b) {
-        var c, d = 0,
-            e = 0,
-            f = [];
-        if (b)
-            if (a.cg[C](u), a.opt.flush) O[a.id] = "";
-            else {
-                for (c = O[a.id].split(";"); e < a.ln; e++) f[y](100 * c[e] / c[a.ln] + "%"), b.eq(e).css(u, f[e]);
-                for (e = 0; e < a.ln; e++) a.cg.eq(e).css(u, f[e])
-            } else {
-                O[a.id] = "";
-                for (e in a.c) c = a.c[e][u](), O[a.id] += c + ";", d += c;
-                O[a.id] += d
-            }
-    }
+	this.id = table.id;
 
-    function b(b) {
-        var e = ">thead>tr>",
-            f = '"></div>',
-            g = ">tbody>tr:first>",
-            i = ">tr:first>",
-            j = "td",
-            k = "th",
-            l = b.find(e + k + "," + e + j);
-        l.length || (l = b.find(g + k + "," + i + k + "," + g + j + "," + i + j));
-        b.cg = b.find("col");
-        b.ln = l.length;
-        b.p && O && O[b.id] && c(b, l);
-        l.each(function (c) {
-            var d = a(this),
-                e = a(b.gc[z](w + "CRG" + f)[0].lastChild);
-            e.t = b;
-            e.i = c;
-            e.c = d;
-            d.w = d[u]();
-            b.g[y](e);
-            b.c[y](d);
-            d[u](d.w)[C](u);
-            if (c < b.ln - 1) e.mousedown(h)[z](b.opt.gripInnerHtml)[z](w + q + '" style="cursor:' + b.opt.hoverCursor + f);
-            else e[B]("CRL")[A]("CRG");
-            e.data(q, {
-                i: c,
-                t: b[v](o)
-            })
-        });
-        b.cg[C](u);
-        d(b);
-        b.find("td, th").not(l).not(N + "th, table td").each(function () {
-            a(this)[C](u)
-        })
-    }
-    var i = a(document),
-        j = !1,
-        k = null,
-        l = k,
-        m = [],
-        n = 0,
-        o = "id",
-        p = "px",
-        q = "CRZ",
-        r = parseInt,
-        s = Math,
-        t = a.browser.msie,
-        u = "width",
-        v = "attr",
-        w = '<div class="',
-        x = "<style type='text/css'>",
-        y = "push",
-        z = "append",
-        A = "removeClass",
-        B = "addClass",
-        C = "removeAttr",
-        D = "bind",
-        E = "mousemove.",
-        F = "mouseup.",
-        G = "currentTarget",
-        H = "left",
-        I = "position",
-        J = "}</style>",
-        K = "!important;",
-        L = ":0px" + K,
-        M = "resize",
-        N = "table",
-        O, P = a("head")[z](x + ".CRZ{table-layout:fixed;}.CRZ td,.CRZ th{padding-" + H + L + "padding-right" + L + "overflow:hidden}.CRC{height:0px;" + I + ":relative;}.CRG{margin-left:-5px;" + I + ":absolute;z-index:5;}.CRG .CRZ{" + I + ":absolute;background-color:red;filter:alpha(opacity=1);opacity:0;width:10px;height:100%;top:0px}.CRL{" + I + ":absolute;width:1px}.CRD{ border-left:1px dotted black" + J);
-    try {
-        O = sessionStorage
-    } catch (Q) {}
-    a(window)[D](M + "." + q, function () {
-        for (a in m) {
-            var a = m[a],
-                b, c = 0;
-            a[A](q);
-            if (a.w != a[u]()) {
-                a.w = a[u]();
-                for (b = 0; b < a.ln; b++) c += a.c[b].w;
-                for (b = 0; b < a.ln; b++) a.c[b].css(u, s.round(1e3 * a.c[b].w / c) / 10 + "%").l = 1
-            }
-            d(a[B](q))
-        }
-    });
-    a.fn.extend({
-        colResizable: function (c) {
-            c = a.extend({
-                draggingClass: "CRD",
-                gripInnerHtml: "",
-                liveDrag: j,
-                minWidth: 15,
-                headerOnly: j,
-                hoverCursor: "e-" + M,
-                dragCursor: "e-" + M,
-                postbackSafe: j,
-                flush: j,
-                marginLeft: k,
-                marginRight: k,
-                disable: j,
-                onDrag: k,
-                onResize: k
-            }, c);
-            return this.each(function () {
-                var d = c,
-                    e = a(this);
-                if (d.disable) {
-                    if (e = e[v](o), (d = m[e]) && d.is(N)) d[A](q).gc.remove(), delete m[e]
-                } else {
-                    var f = e.id = e[v](o) || q + n++;
-                    e.p = d.postbackSafe;
-                    if (e.is(N) && !m[f]) e[B](q)[v](o, f).before(w + 'CRC"/>'), e.opt = d, e.g = [], e.c = [], e.w = e[u](), e.gc = e.prev(), d.marginLeft && e.gc.css("marginLeft", d.marginLeft), d.marginRight && e.gc.css("marginRight", d.marginRight), e.cs = r(t ? this.cellSpacing || this.currentStyle.borderSpacing : e.css("border-spacing")) || 2, e.b = r(t ? this.border || this.currentStyle.borderLeftWidth : e.css("border-" + H + "-" + u)) || 1, m[f] = e, b(e)
-                }
-            })
-        }
-    })
-})(jQuery)
+	// ============================================================
+	// private data
+	var self = this;
+
+	var dragColumns  = table.rows[0].cells; // first row columns, used for changing of width
+	if (!dragColumns) return; // return if no table exists or no one row exists
+
+	var dragColumnNo; // current dragging column
+	var dragX;        // last event X mouse coordinate
+
+	var saveOnmouseup;   // save document onmouseup event handler
+	var saveOnmousemove; // save document onmousemove event handler
+	var saveBodyCursor;  // save body cursor property
+
+	// ============================================================
+	// methods
+
+	// ============================================================
+	// do changes columns widths
+	// returns true if success and false otherwise
+	this.changeColumnWidth = function(no, w) {
+		if (!dragColumns) return false;
+
+		if (no < 0) return false;
+		if (dragColumns.length < no) return false;
+
+		if (parseInt(dragColumns[no].style.width) <= -w) return false;
+		if (dragColumns[no+1] && parseInt(dragColumns[no+1].style.width) <= w) return false;
+
+		dragColumns[no].style.width = parseInt(dragColumns[no].style.width) + w +'px';
+		if (dragColumns[no+1])
+			dragColumns[no+1].style.width = parseInt(dragColumns[no+1].style.width) - w + 'px';
+
+		return true;
+	}
+
+	// ============================================================
+	// do drag column width
+	this.columnDrag = function(e) {
+		var e = e || window.event;
+		var X = e.clientX || e.pageX;
+		if (!self.changeColumnWidth(dragColumnNo, X-dragX)) {
+			// stop drag!
+			self.stopColumnDrag(e);
+		}
+
+		dragX = X;
+		// prevent other event handling
+		preventEvent(e);
+		return false;
+	}
+
+	// ============================================================
+	// stops column dragging
+	this.stopColumnDrag = function(e) {
+		var e = e || window.event;
+		if (!dragColumns) return;
+
+		// restore handlers & cursor
+		document.onmouseup  = saveOnmouseup;
+		document.onmousemove = saveOnmousemove;
+		document.body.style.cursor = saveBodyCursor;
+
+		// remember columns widths in cookies for server side
+		var colWidth = '';
+		var separator = '';
+		for (var i=0; i<dragColumns.length; i++) {
+			colWidth += separator + parseInt( getWidth(dragColumns[i]) );
+			separator = '+';
+		}
+		var expire = new Date();
+		expire.setDate(expire.getDate() + 365); // year
+		document.cookie = self.id + '-width=' + colWidth +
+			'; expires=' + expire.toGMTString();
+
+		preventEvent(e);
+	}
+
+	// ============================================================
+	// init data and start dragging
+	this.startColumnDrag = function(e) {
+		var e = e || window.event;
+
+		// if not first button was clicked
+		//if (e.button != 0) return;
+
+		// remember dragging object
+		dragColumnNo = (e.target || e.srcElement).parentNode.parentNode.cellIndex;
+		dragX = e.clientX || e.pageX;
+
+		// set up current columns widths in their particular attributes
+		// do it in two steps to avoid jumps on page!
+		var colWidth = new Array();
+		for (var i=0; i<dragColumns.length; i++)
+			colWidth[i] = parseInt( getWidth(dragColumns[i]) );
+		for (var i=0; i<dragColumns.length; i++) {
+			dragColumns[i].width = ""; // for sure
+			dragColumns[i].style.width = colWidth[i] + "px";
+		}
+
+		saveOnmouseup       = document.onmouseup;
+		document.onmouseup  = self.stopColumnDrag;
+
+		saveBodyCursor             = document.body.style.cursor;
+		document.body.style.cursor = 'w-resize';
+
+		// fire!
+		saveOnmousemove      = document.onmousemove;
+		document.onmousemove = self.columnDrag;
+
+		preventEvent(e);
+	}
+
+	// prepare table header to be draggable
+	// it runs during class creation
+	for (var i=0; i<dragColumns.length; i++) {
+		dragColumns[i].innerHTML = "<div style='position:relative;height:100%;width:100%'>"+
+			"<div style='"+
+			"position:absolute;height:100%;width:5px;margin-right:-5px;"+
+			"left:100%;top:0px;cursor:w-resize;z-index:10;'>"+
+			"</div>"+
+			dragColumns[i].innerHTML+
+			"</div>";
+			// BUGBUG: calculate real border width instead of 5px!!!
+			dragColumns[i].firstChild.firstChild.onmousedown = this.startColumnDrag;
+		}
+}
+
+// select all tables and make resizable those that have 'resizable' class
+var resizableTables = new Array();
+function ResizableColumns() {
+
+	var tables = document.getElementsByTagName('table');
+	for (var i=0; tables.item(i); i++) {
+		if (tables[i].className.match(/resizable/)) {
+			// generate id
+			if (!tables[i].id) tables[i].id = 'table'+(i+1);
+			// make table resizable
+			resizableTables[resizableTables.length] = new ColumnResize(tables[i]);
+		}
+	}
+//	alert(resizableTables.length + ' tables was added.');
+}
+// init tables
+/*
+if (document.addEventListener)
+	document.addEventListener("onload", ResizableColumns, false);
+else if (window.attachEvent)
+	window.attachEvent("onload", ResizableColumns);
+*/
+try {
+	window.addEventListener('load', ResizableColumns, false);
+} catch(e) {
+	window.onload = ResizableColumns;
+}
+
+//document.body.onload = ResizableColumns;
+
+//============================================================
+//
+// Usage. In your html code just include the follow:
+//
+//============================================================
+// <table id='objectId'>
+// ...
+// </table>
+// < script >
+// var xxx = new ColumnDrag( 'objectId' );
+// < / script >
+//============================================================
+//
+// NB! spaces was used to prevent browser interpret it!
+//
+//============================================================

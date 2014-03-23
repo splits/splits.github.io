@@ -1,5 +1,14 @@
 //colResizable - credits to Alvaro Prieto Lauroba - MIT & GPL
 (function (a) {
+    jQuery.browser = {};
+    (function () {
+        jQuery.browser.msie = false;
+        jQuery.browser.version = 0;
+        if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
+            jQuery.browser.msie = true;
+            jQuery.browser.version = RegExp.$1;
+        }
+    })();
     function h(b) {
         var c = a(this).data(q),
             d = m[c.t],

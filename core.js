@@ -1,4 +1,4 @@
-//colResizable - by Alvaro Prieto Lauroba - MIT & GPL
+//colResizable - credits to Alvaro Prieto Lauroba - MIT & GPL
 (function (a) {
     function h(b) {
         var c = a(this).data(q),

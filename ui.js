@@ -1,3 +1,3 @@
 $(function(){
-  $("table").colResizable();
+  $("iframe").attr("frameborder","0");
 });
